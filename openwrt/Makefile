@@ -4,7 +4,7 @@ PKG_NAME:=shadowsocks-libev
 PKG_VERSION:=2.4.5
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
-PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/archive
+PKG_SOURCE_URL:=https://github.com/harveyhu2012/shadowsocks-libev/archive
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Max Lv <max.c.lv@gmail.com>
 
