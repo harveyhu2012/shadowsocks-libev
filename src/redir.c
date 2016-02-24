@@ -199,11 +199,11 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         ss_gen_hash(remote->buf, &remote->counter, server->e_ctx, BUF_SIZE);
     }
 
-    if (!remote->send_ctx->connected) {
-        ev_io_stop(EV_A_ & server_recv_ctx->io);
-        ev_io_start(EV_A_ & remote->send_ctx->io);
-        return;
-    }
+    //if (!remote->send_ctx->connected) {
+    //    ev_io_stop(EV_A_ & server_recv_ctx->io);
+    //    ev_io_start(EV_A_ & remote->send_ctx->io);
+    //    return;
+    //}
 
     // SSR beg
     if (server->protocol_plugin) {
@@ -418,7 +418,7 @@ static void remote_send_cb(EV_P_ ev_io *w, int revents)
         if (r == 0) {
             remote_send_ctx->connected = 1;
             ev_io_stop(EV_A_ & remote_send_ctx->io);
-            ev_io_stop(EV_A_ & server->recv_ctx->io);
+            //ev_io_stop(EV_A_ & server->recv_ctx->io);
             ev_timer_stop(EV_A_ & remote_send_ctx->watcher);
 
             // send destaddr
@@ -463,7 +463,7 @@ static void remote_send_cb(EV_P_ ev_io *w, int revents)
                 }
             }
 
-            brealloc(remote->buf, remote->buf->len + abuf->len, BUF_SIZE);
+/*            brealloc(remote->buf, remote->buf->len + abuf->len, BUF_SIZE);
             memmove(remote->buf->array + abuf->len, remote->buf->array, remote->buf->len);
             memcpy(remote->buf->array, abuf->array, abuf->len);
             remote->buf->len += abuf->len;
@@ -485,7 +485,40 @@ static void remote_send_cb(EV_P_ ev_io *w, int revents)
             }
             // SSR end
 
+//            ev_io_start(EV_A_ & remote->recv_ctx->io);
+*/
+            int err = ss_encrypt(abuf, server->e_ctx, BUF_SIZE);
+            if (err) {
+                bfree(abuf);
+                LOGE("invalid password or cipher");
+                close_and_free_remote(EV_A_ remote);
+                close_and_free_server(EV_A_ server);
+                return;
+            }
+
+            if (server->obfs_plugin) {
+                obfs_class *obfs_plugin = server->obfs_plugin;
+                if (obfs_plugin->client_encode) {
+                    abuf->len = obfs_plugin->client_encode(server->obfs, &abuf->array, abuf->len, &abuf->capacity);
+                }
+            }
+            // SSR end
+
+            int s = send(remote->fd, abuf->array, abuf->len, 0);
+
+            bfree(abuf);
+
+            if (s < abuf->len) {
+                LOGE("failed to send addr");
+                close_and_free_remote(EV_A_ remote);
+                close_and_free_server(EV_A_ server);
+                return;
+            }
+
+            ev_io_start(EV_A_ & server->recv_ctx->io);
             ev_io_start(EV_A_ & remote->recv_ctx->io);
+
+            return;
         } else {
             ERROR("getpeername");
             // not connected
@@ -755,7 +788,7 @@ static void accept_cb(EV_P_ ev_io *w, int revents)
     connect(remotefd, remote_addr, get_sockaddr_len(remote_addr));
     // listen to remote connected event
     ev_io_start(EV_A_ & remote->send_ctx->io);
-    ev_io_start(EV_A_ & server->recv_ctx->io);
+    //ev_io_start(EV_A_ & server->recv_ctx->io);
     ev_timer_start(EV_A_ & remote->send_ctx->watcher);
 }
 
