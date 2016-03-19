@@ -199,11 +199,11 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         ss_gen_hash(remote->buf, &remote->counter, server->e_ctx, BUF_SIZE);
     }
 
-    //if (!remote->send_ctx->connected) {
-    //    ev_io_stop(EV_A_ & server_recv_ctx->io);
-    //    ev_io_start(EV_A_ & remote->send_ctx->io);
-    //    return;
-    //}
+    /* if (!remote->send_ctx->connected) {
+        ev_io_stop(EV_A_ & server_recv_ctx->io);
+        ev_io_start(EV_A_ & remote->send_ctx->io);
+        return;
+    } //*/
 
     // SSR beg
     if (server->protocol_plugin) {
